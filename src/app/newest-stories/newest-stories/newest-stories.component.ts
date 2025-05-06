@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Story } from 'src/app/models/story';
 import { NewsService } from 'src/app/services/news.service';
 
 
@@ -10,12 +11,12 @@ import { NewsService } from 'src/app/services/news.service';
 })
 export class NewestStoriesComponent implements OnInit 
 {
-  stories: any[] = [];
+  stories: Story[] = [];
   page: number = 1;
   pageSize: number = 20;
   searchQuery: string = '';
   loading = false;
-  filteredStories: any[] = [];
+  hasMore: boolean = true;
 
   constructor(private newsService: NewsService) {}
 
@@ -24,32 +25,32 @@ export class NewestStoriesComponent implements OnInit
   }
   loadStories() {
     this.loading = true;
-    this.newsService.getNewestStories(this.page, this.pageSize).subscribe((stories) => {
-      this.stories = stories;
-      this.applySearch();
+    this.newsService.getNewestStories(this.page, this.pageSize, this.searchQuery).subscribe({
+      next: (stories) => {
+      this.stories = stories.filter(story=>story.url);
+      this.hasMore=stories.length===this.pageSize;
       this.loading = false; 
-    });
+    },
+    error: () => {
+      this.loading = false;
+    }
+  });
   }
 
-  searchStories() {
-    this.newsService.searchStories(this.searchQuery).subscribe((stories) => {
-      this.stories = stories;
-    });
+  applySearch(): void {
+  this.page=1;
+  this.loadStories();
   }
 
-  applySearch() {
-    const query = this.searchQuery.toLowerCase();
-    this.filteredStories = this.stories.filter(story =>
-      story.title?.toLowerCase().includes(query)
-    );
-  }
-
-  nextPage() {
+  nextPage(): void 
+  {
+    if(this.hasMore){
     this.page++;
     this.loadStories();
   }
+}
 
-  prevPage() {
+  prevPage(): void {
     if (this.page > 1) {
       this.page--;
       this.loadStories();

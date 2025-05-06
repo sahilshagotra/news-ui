@@ -11,13 +11,11 @@ export class NewsService {
 
   constructor(private http: HttpClient) {}
 
-  getNewestStories(page: number, pageSize: number): Observable<Story[]> {
-    const params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+  getNewestStories(page: number, pageSize: number, query: string = ''): Observable<Story[]> {
+    let params = new HttpParams().set('page', page.toString()).set('pageSize', pageSize.toString());
+    if (query) {
+      params = params.set('query', query);
+    }
     return this.http.get<Story[]>(this.apiUrl, { params });
-  }
-
-  searchStories(query: string): Observable<Story[]> {
-    const params = new HttpParams().set('query', query);
-    return this.http.get<Story[]>(`${this.apiUrl}/search`, { params });
   }
 }

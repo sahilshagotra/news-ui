@@ -1,31 +1,30 @@
-  <div class="container">
+<div class="container">
     <h2>Newest Hacker News Stories</h2>
   
     <div class="search-bar">
       <input
         type="text"
         [(ngModel)]="searchQuery"
-        (input)="applySearch()"
+        (keyup.enter)="applySearch()"
         placeholder="Search for stories..."
       />
     </div>
-
-    <div *ngIf="loading" class="spinner-container">
-        <div class="spinner"></div>
-        <div>Loading stories...</div>
-      </div>
   
-    <ul class="story-list">
-        <li *ngFor="let story of filteredStories">
-            <a *ngIf="story.url" [href]="story.url" target="_blank">{{ story.title }}</a>
-            <span *ngIf="!story.url">{{ story.title }} (no link)</span>
-          </li>
+    <div *ngIf="loading" class="spinner-container">
+      <div class="spinner"></div>
+      <div>Loading stories...</div>
+    </div>
+  
+    <ul class="story-list" *ngIf="!loading">
+      <li *ngFor="let story of stories">
+        <a [href]="story.url" target="_blank">{{ story.title }}</a>
+      </li>
     </ul>
   
-    <div class="pagination">
+    <div class="pagination" *ngIf="!loading && stories.length">
       <button (click)="prevPage()" [disabled]="page === 1">Previous</button>
       <span>Page {{ page }}</span>
-      <button (click)="nextPage()" [disabled]="filteredStories.length < pageSize">Next</button>
+      <button (click)="nextPage()" [disabled]="!hasMore">Next</button>
     </div>
   </div>
   
