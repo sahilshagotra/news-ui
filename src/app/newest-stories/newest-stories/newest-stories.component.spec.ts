@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NewestStoriesComponent } from './newest-stories.component';
 import { HttpClientModule } from '@angular/common/http';
 import { NewsService } from 'src/app/services/news.service';
+import { Story } from 'src/app/models/story';
 
 describe('NewestStoriesComponent', () => {
   let component: NewestStoriesComponent;
@@ -18,6 +19,14 @@ describe('NewestStoriesComponent', () => {
     { id: 4, title: 'Test Story 4' },
     
   ];
+
+  const getPagedResult = (items: Story[], currentPage = 1): any => ({
+    items,
+    totalCount: items.length,
+    currentPage,
+    pageSize: 20,
+    totalPages: 1
+  });
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -38,7 +47,7 @@ describe('NewestStoriesComponent', () => {
     fixture.detectChanges();
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20');
     expect(req.request.method).toBe('GET');
-    req.flush(mockStories);
+    req.flush(getPagedResult(mockStories));
     tick();
 
     expect(component).toBeTruthy();
@@ -48,7 +57,7 @@ describe('NewestStoriesComponent', () => {
     component.loadStories();
 
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20');
-    req.flush(mockStories);
+    req.flush(getPagedResult(mockStories));
 
     tick();
     expect(component.stories.length).toBe(3);
@@ -56,10 +65,13 @@ describe('NewestStoriesComponent', () => {
   }));
 
   it('should paginate to the next page', fakeAsync(() => {
-    component.page = 1;
+    fixture.detectChanges();
+    let req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20');
+    req.flush({ items: mockStories, totalCount: 4, currentPage: 1, pageSize: 20, totalPages: 2 });
+    tick();
     component.nextPage();
-    const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20');
-    req.flush(mockStories);
+    req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20');
+    req.flush({ items: mockStories, totalCount: 4, currentPage: 2, pageSize: 20, totalPages: 2 });
     tick();
     expect(component.page).toBe(2);
   }));
@@ -68,7 +80,7 @@ describe('NewestStoriesComponent', () => {
     component.page = 2;
     component.prevPage();
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20');
-    req.flush(mockStories);
+    req.flush(getPagedResult(mockStories,1));
     tick();
     expect(component.page).toBe(1);
   }));
@@ -78,7 +90,7 @@ describe('NewestStoriesComponent', () => {
     component.applySearch();
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20&query=Searchable');
     expect(req.request.method).toBe('GET');
-    req.flush([mockStories[2]]);
+    req.flush(getPagedResult([mockStories[2]]));
     tick();
     expect(component.stories.length).toBe(1);
     expect(component.stories[0].title).toBe('Searchable Test Story 3');
@@ -86,10 +98,13 @@ describe('NewestStoriesComponent', () => {
 
   it('should handle pagination with search query', fakeAsync(() => {
     component.searchQuery = 'Searchable';
-    component.page = 1;
+    fixture.detectChanges();
+    let req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20&query=Searchable');
+    req.flush({ items: [mockStories[2]], totalCount: 1, currentPage: 1, pageSize: 20, totalPages: 2 });
+    tick();
     component.nextPage();
-    const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20&query=Searchable');
-    req.flush([]);
+    req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20&query=Searchable');
+    req.flush({ items: [], totalCount: 1, currentPage: 2, pageSize: 20, totalPages: 2 });
     tick();
     expect(component.page).toBe(2);
   }));

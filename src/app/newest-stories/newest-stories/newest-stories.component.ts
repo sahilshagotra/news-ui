@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PagedResult } from 'src/app/models/paged-result.model';
 import { Story } from 'src/app/models/story';
 import { NewsService } from 'src/app/services/news.service';
 
@@ -16,7 +17,8 @@ export class NewestStoriesComponent implements OnInit
   pageSize: number = 20;
   searchQuery: string = '';
   loading = false;
-  hasMore: boolean = true;
+  totalCount: number = 0;
+  totalPages: number = 0;
 
   constructor(private newsService: NewsService) {}
 
@@ -26,9 +28,10 @@ export class NewestStoriesComponent implements OnInit
   loadStories() {
     this.loading = true;
     this.newsService.getNewestStories(this.page, this.pageSize, this.searchQuery).subscribe({
-      next: (stories) => {
-      this.stories = stories.filter(story=>story.url);
-      this.hasMore=stories.length===this.pageSize;
+      next: (pagedResult: PagedResult<Story>) => {
+      this.stories = pagedResult.items.filter(story=>story.url);
+      this.totalCount = pagedResult.totalCount;
+      this.totalPages = pagedResult.totalPages;
       this.loading = false; 
     },
     error: () => {
@@ -44,7 +47,7 @@ export class NewestStoriesComponent implements OnInit
 
   nextPage(): void 
   {
-    if(this.hasMore){
+    if(this.page < this.totalPages){
     this.page++;
     this.loadStories();
   }
@@ -56,5 +59,4 @@ export class NewestStoriesComponent implements OnInit
       this.loadStories();
     }
   }
-
 }

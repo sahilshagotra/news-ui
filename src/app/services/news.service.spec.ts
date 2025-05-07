@@ -14,6 +14,14 @@ describe('NewsService', () => {
     { id: 4, title: 'Test Story 4' },
   ];
 
+  const getPagedResult = (items: Story[], currentPage = 1): any => ({
+    items,
+    totalCount: items.length,
+    currentPage,
+    pageSize: 20,
+    totalPages: 1
+  });
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule], 
@@ -31,36 +39,37 @@ describe('NewsService', () => {
   it('should fetch newest stories and filtr by search query', () => {
     const searchQuery = 'Searchable';
     service.getNewestStories(1, 20, searchQuery).subscribe(stories => {
-      expect(stories.length).toBe(1);
-      expect(stories[0].title).toBe('Searchable Test Story 3');
+      expect(stories.items.length).toBe(1);
+      expect(stories.items[0].title).toBe('Searchable Test Story 3');
+      expect(stories.totalCount).toBe(1);
     });
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=1&pageSize=20&query=' + encodeURIComponent(searchQuery));
     expect(req.request.method).toBe('GET');
     const filtered = mockStories.filter(s => s.title.toLowerCase().includes(searchQuery.toLowerCase()));
-    req.flush(filtered);
+    req.flush(getPagedResult(filtered));
   });
 
   it('should paginate to the next page', () => {
     service.getNewestStories(2, 20, '').subscribe(stories => {
-      expect(stories.length).toBe(4); 
-      expect(stories[0].title).toBe('Test Story 1');
+      expect(stories.items.length).toBe(4); 
+      expect(stories.items[0].title).toBe('Test Story 1');
     });
 
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20');
     expect(req.request.method).toBe('GET');
-    req.flush(mockStories);
+    req.flush(getPagedResult(mockStories, 2));
   });
 
   it('should paginate with search query', () => {
     const searchQuery = 'Searchable';
     service.getNewestStories(2, 20, searchQuery).subscribe(stories => {
-      expect(stories.length).toBe(1);  // Filtered stories on page 2
-      expect(stories[0].title).toBe('Searchable Test Story 3');
+      expect(stories.items.length).toBe(1);  // Filtered stories on page 2
+      expect(stories.items[0].title).toBe('Searchable Test Story 3');
     });
 
     const req = httpMock.expectOne('https://localhost:7192/api/News/newest?page=2&pageSize=20&query=' + encodeURIComponent(searchQuery));
     expect(req.request.method).toBe('GET');
-    req.flush([mockStories[2]]);
+    req.flush(getPagedResult([mockStories[2]], 2));
   });
 
   afterEach(() => {

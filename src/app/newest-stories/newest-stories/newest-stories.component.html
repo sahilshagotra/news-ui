@@ -23,8 +23,8 @@
   
     <div class="pagination" *ngIf="!loading && stories.length">
       <button (click)="prevPage()" [disabled]="page === 1">Previous</button>
-      <span>Page {{ page }}</span>
-      <button (click)="nextPage()" [disabled]="!hasMore">Next</button>
+      <span>Page {{ page }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="page===totalPages">Next</button>
     </div>
   </div>
   
